@@ -20,7 +20,7 @@ def save_snapshot(net, loader, path="results/0/"):
 
     batch, _ = next(iter(test_loader))
     batch = mx.array(batch.numpy()).transpose(0, 2, 3, 1)
-    x_hat, _, _, _, _ = net(batch)
+    x_hat, _, _, _ = net(batch)
 
     x_hat = np.array(x_hat)
     batch = np.array(batch)
@@ -43,7 +43,7 @@ def save_snapshot(net, loader, path="results/0/"):
 
 
 def loss_fn(net, X):
-    x_hat, loss_term_1, loss_term_2, perplexity, closest_indices = net(X)
+    x_hat, loss_term_1, loss_term_2, perplexity = net(X)
     recon_loss = ((x_hat - X) ** 2).mean() / x_train_var
     loss = recon_loss + loss_term_1 + loss_term_2
 
