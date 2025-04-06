@@ -3,7 +3,7 @@ import mlx.core as mx
 
 def create_one_hot(inp: mx.array, num_labels: int):
     out = mx.zeros((inp.shape[0], num_labels))
-    for i, v in enumerate(inp):
+    for i, v in enumerate(inp.tolist()):
         out[i, v] = 1
 
     return out
