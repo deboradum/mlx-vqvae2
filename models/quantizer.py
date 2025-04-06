@@ -42,9 +42,9 @@ class Quantizer(nn.Module):
         one_hot = create_one_hot(closest_indices, self.k)
         z_q = self.e(closest_indices).reshape(*z.shape)
 
-        loss_term_1 = ((mx.stop_gradient(z_q) - z) ** 2).mean()
-        loss_term_2 = self.beta * ((z_q - mx.stop_gradient(z)) ** 2).mean()
-        # loss = loss_term_1 + loss_term_2
+        codebook_loss = ((mx.stop_gradient(z_q) - z) ** 2).mean()
+        commitment_loss = self.beta * ((z_q - mx.stop_gradient(z)) ** 2).mean()
+        loss = codebook_loss + commitment_loss
 
         e_mean = one_hot.mean(0)
         eps = 1e-10
@@ -54,4 +54,4 @@ class Quantizer(nn.Module):
         # z_q = mx.contiguous(z_q.transpose(0, 3, 1, 2))
         z_q = mx.contiguous(z_q)
 
-        return loss_term_1, loss_term_2, z_q, perplexity
+        return loss, z_q, perplexity

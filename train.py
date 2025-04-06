@@ -43,14 +43,14 @@ def save_snapshot(net, loader, path="results/0/"):
 
 
 def loss_fn(net, X):
-    x_hat, loss_term_1, loss_term_2, perplexity = net(X)
+    x_hat, top_loss, btm_loss, perplexity = net(X)
     recon_loss = ((x_hat - X) ** 2).mean() / x_train_var
-    loss = recon_loss + loss_term_1 + loss_term_2
+    loss = recon_loss + top_loss + btm_loss
 
     metrics["total_loss"].append(loss.item())
     metrics["recon_loss"].append(recon_loss.item())
-    metrics["loss_term_1"].append(loss_term_1.item())
-    metrics["loss_term_2"].append(loss_term_2.item())
+    metrics["top_loss"].append(top_loss.item())
+    metrics["btm_loss"].append(btm_loss.item())
     metrics["perplexity"].append(perplexity.item())
 
     return loss
@@ -68,7 +68,7 @@ def get_avg_metrics(window):
     return total_loss, recon_loss, perplexity
 
 
-def train(epochs, net, optimizer, train_loader, test_loader, x_train_var, log_every=50):
+def train(epochs, net, optimizer, train_loader, test_loader, x_train_var, log_every=10):
     loss_and_grad_fn = nn.value_and_grad(net, loss_fn)
     s = time.perf_counter()
     for epoch in range(epochs):
@@ -87,21 +87,21 @@ def train(epochs, net, optimizer, train_loader, test_loader, x_train_var, log_ev
                 avg_total_loss, avg_recon_loss, avg_perplexity = get_avg_metrics(log_every)
                 s = time.perf_counter()
                 print(
-                    f"Epoch {epoch}, step {i} - loss: {avg_total_loss:.5f}, recon_loss: {avg_recon_loss:.5f}, perplexity: {avg_perplexity:.5f}. Took {took:.3f}s ({time_per_it:.3f} s/it)"
+                    f"Epoch {epoch}, step {i}/{len(train_loader)} - loss: {avg_total_loss:.5f}, recon_loss: {avg_recon_loss:.5f}, perplexity: {avg_perplexity:.5f}. Took {took:.3f}s ({time_per_it:.3f} s/it)"
                 )
 
 if __name__ == "__main__":
-    dataset = "CIFAR10"
+    dataset = "geoguessr"
     metrics = {
         "total_loss": [],
         "recon_loss": [],
-        "loss_term_1": [],
-        "loss_term_2": [],
+        "top_loss": [],
+        "btm_loss": [],
         "perplexity": [],
     }
-    net = VQVAE2(128, 32, 2, 1024, 128, 0.25)
+    net = VQVAE2(128, 64, 2, 512, 64, 0.25)
 
-    optimizer = optim.Adam(learning_rate=5e-4)
+    optimizer = optim.Adam(learning_rate=1e-4)
 
-    train_loader, test_loader, x_train_var = get_dataloaders(dataset, batch_size=32)
+    train_loader, test_loader, x_train_var = get_dataloaders(dataset, batch_size=4)
     train(10, net, optimizer, train_loader, test_loader, x_train_var)

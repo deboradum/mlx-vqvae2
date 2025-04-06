@@ -34,12 +34,12 @@ class VQVAE2(nn.Module):
 
         # Top part of fig 2a.
         h_top = self.pre_quantization_conv_top(h_top)
-        loss_term_1, loss_term_2, e_top, perplexity = self.quantizer_top(h_top)
+        top_loss, e_top, perplexity = self.quantizer_top(h_top)
         dec_top = self.decoder_top(h_top)
 
         # Middle part of fig 2a.
         h_btm = self.pre_quantization_conv_btm(mx.concatenate((h_btm, dec_top), axis=-1))
-        loss_term_1, loss_term_2, e_btm, perplexity = self.quantizer_btm(h_btm)
+        btm_loss, e_btm, perplexity = self.quantizer_btm(h_btm)
 
         # Upsample e_top so it can be concatenated with e_btm before final decoder.
         e_top = self.top_upscale(e_top)
@@ -47,4 +47,4 @@ class VQVAE2(nn.Module):
         # The decoder ...[] takes as input all levels of the quantized latent hierarchy
         x_hat = self.decoder(mx.concatenate((e_btm, e_top), axis=-1))
 
-        return x_hat, loss_term_1, loss_term_2, perplexity
+        return x_hat, top_loss, btm_loss, perplexity
