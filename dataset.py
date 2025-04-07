@@ -61,13 +61,12 @@ class GeoGuessrDataset(Dataset):
 
 
 def get_loaders_geoGuessr(
-    # batch_size, directory="createDataset/geoGuessrDataset/"
     batch_size, directory="/Users/personal/Desktop/geoGuessV2/createDataset/geoGuessrDataset"
 ):
     transform = transforms.Compose(
         [
-            transforms.RandomCrop((448, 448)),
-            transforms.Resize((224, 224)),
+            transforms.RandomCrop((512, 512)),
+            # transforms.Resize((224, 224)),
             transforms.ToTensor(),
             # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             transforms.RandomHorizontalFlip(),
@@ -88,7 +87,7 @@ def get_loaders_geoGuessr(
             datasets[split],
             batch_size=batch_size,
             shuffle=(split == "train"),
-            num_workers=4,
+            num_workers=2,
         )
         for split in ["train", "val"]
     }
