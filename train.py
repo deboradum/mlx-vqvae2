@@ -6,11 +6,10 @@ import mlx.nn as nn
 import mlx.core as mx
 import mlx.optimizers as optim
 
-
 from PIL import Image
 
-
 from models.vqvae import VQVAE2
+from mlx.utils import tree_flatten
 from dataset import get_dataloaders
 
 
@@ -19,27 +18,32 @@ def save_snapshot(net, loader, path="results/0/"):
     os.makedirs(path, exist_ok=True)
 
     batch, _ = next(iter(test_loader))
-    batch = mx.array(batch.numpy()).transpose(0, 2, 3, 1)
-    x_hat, _, _, _ = net(batch)
+    ctr = 0
+    for i, (batch, _) in enumerate(loader):
+        if i > 4:
+            return
+        batch = mx.array(batch.numpy()).transpose(0, 2, 3, 1)
+        x_hat, _, _, _ = net(batch)
 
-    x_hat = np.array(x_hat)
-    batch = np.array(batch)
+        x_hat = np.array(x_hat)
+        batch = np.array(batch)
 
-    for i in range(batch.shape[0]):
-        orig = batch[i]
-        recon = x_hat[i]
+        for j in range(batch.shape[0]):
+            orig = batch[i]
+            recon = x_hat[i]
 
-        orig = np.clip(orig * 255, 0, 255).astype(np.uint8)
-        recon = np.clip(recon * 255, 0, 255).astype(np.uint8)
+            orig = np.clip(orig * 255, 0, 255).astype(np.uint8)
+            recon = np.clip(recon * 255, 0, 255).astype(np.uint8)
 
-        h, w, c = orig.shape
+            h, w, c = orig.shape
 
-        separator_img = np.full((h, 1, c), (0, 255, 0), dtype=np.uint8)
+            separator_img = np.full((h, 1, c), (0, 255, 0), dtype=np.uint8)
 
-        combined = np.concatenate([orig, separator_img, recon], axis=1).astype(np.uint8)
-        img = Image.fromarray(combined)
+            combined = np.concatenate([orig, separator_img, recon], axis=1).astype(np.uint8)
+            img = Image.fromarray(combined)
 
-        img.save(os.path.join(path, f"{i}.png"))
+            img.save(os.path.join(path, f"{ctr}.png"))
+            ctr += 1
 
 
 def loss_fn(net, X):
@@ -68,11 +72,11 @@ def get_avg_metrics(window):
     return total_loss, recon_loss, perplexity
 
 
-def train(epochs, net, optimizer, train_loader, test_loader, x_train_var, log_every=10):
+def train(epochs, net, optimizer, train_loader, test_loader, log_every=100, save_every=1):
     loss_and_grad_fn = nn.value_and_grad(net, loss_fn)
     s = time.perf_counter()
     for epoch in range(epochs):
-        save_snapshot(net, test_loader, path=f"results/{epoch}")
+        # save_snapshot(net, test_loader, path=f"results/{epoch}")
         net.train(True)
         for i, (X, _) in enumerate(train_loader):
             X = mx.array(X.numpy()).transpose(0, 2, 3, 1)
@@ -85,10 +89,17 @@ def train(epochs, net, optimizer, train_loader, test_loader, x_train_var, log_ev
                 took = time.perf_counter() - s
                 time_per_it = took / log_every
                 avg_total_loss, avg_recon_loss, avg_perplexity = get_avg_metrics(log_every)
-                s = time.perf_counter()
                 print(
                     f"Epoch {epoch}, step {i}/{len(train_loader)} - loss: {avg_total_loss:.5f}, recon_loss: {avg_recon_loss:.5f}, perplexity: {avg_perplexity:.5f}. Took {took:.3f}s ({time_per_it:.3f} s/it)"
                 )
+                save_snapshot(net, test_loader, path=f"results/{epoch}_{i}")
+                s = time.perf_counter()
+
+        if epoch % save_every == 0:
+            model_path = f"checkpoint_epoch_{epoch}.npz"
+            print(f"Saving model in {model_path}")
+            flat_params = tree_flatten(net.parameters())
+            mx.savez(model_path, **dict(flat_params))
 
 if __name__ == "__main__":
     dataset = "geoguessr"
@@ -104,4 +115,4 @@ if __name__ == "__main__":
     optimizer = optim.Adam(learning_rate=1e-4)
 
     train_loader, test_loader, x_train_var = get_dataloaders(dataset, batch_size=4)
-    train(10, net, optimizer, train_loader, test_loader, x_train_var)
+    train(10, net, optimizer, train_loader, test_loader, log_every=1000, save_every=1)
