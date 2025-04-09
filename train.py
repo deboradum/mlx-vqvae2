@@ -18,9 +18,9 @@ def save_snapshot(net, loader, path="results/0/"):
     net.train(False)
     os.makedirs(path, exist_ok=True)
 
-    batch, _ = next(iter(test_loader))
     ctr = 0
     for i, (batch, _) in enumerate(loader):
+        # Only do four batches
         if i > 4:
             return
         batch = mx.array(batch.numpy()).transpose(0, 2, 3, 1)
@@ -36,11 +36,7 @@ def save_snapshot(net, loader, path="results/0/"):
             orig = np.clip(orig * 255, 0, 255).astype(np.uint8)
             recon = np.clip(recon * 255, 0, 255).astype(np.uint8)
 
-            h, w, c = orig.shape
-
-            separator_img = np.full((h, 1, c), (0, 255, 0), dtype=np.uint8)
-
-            combined = np.concatenate([orig, separator_img, recon], axis=1).astype(np.uint8)
+            combined = np.concatenate([orig, recon], axis=1).astype(np.uint8)
             img = Image.fromarray(combined)
 
             img.save(os.path.join(path, f"{ctr}.png"))
