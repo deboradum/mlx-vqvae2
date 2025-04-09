@@ -29,8 +29,8 @@ def save_snapshot(net, loader, path="results/0/"):
         batch = np.array(batch)
 
         for j in range(batch.shape[0]):
-            orig = batch[i]
-            recon = x_hat[i]
+            orig = batch[j]
+            recon = x_hat[j]
 
             orig = np.clip(orig * 255, 0, 255).astype(np.uint8)
             recon = np.clip(recon * 255, 0, 255).astype(np.uint8)
