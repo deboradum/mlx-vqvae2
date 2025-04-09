@@ -1,5 +1,6 @@
 import os
 import time
+import argparse
 
 import numpy as np
 import mlx.nn as nn
@@ -101,8 +102,19 @@ def train(epochs, net, optimizer, train_loader, test_loader, log_every=100, save
             flat_params = tree_flatten(net.parameters())
             mx.savez(model_path, **dict(flat_params))
 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dataset", type=str, default="geoguessr")
+    parser.add_argument("--log_every", type=int, default=100)
+    parser.add_argument("--save_every", type=int, default=1)
+    parser.add_argument("--load_checkpoint", type=str, default=None)
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    dataset = "geoguessr"
+    args = parse_args()
     metrics = {
         "total_loss": [],
         "recon_loss": [],
@@ -111,8 +123,18 @@ if __name__ == "__main__":
         "perplexity": [],
     }
     net = VQVAE2(128, 64, 2, 512, 64, 0.25)
+    if args.load_checkpoint:
+        net.load_weights(args.load_checkpoint)
 
     optimizer = optim.Adam(learning_rate=1e-4)
 
-    train_loader, test_loader, x_train_var = get_dataloaders(dataset, batch_size=4)
-    train(10, net, optimizer, train_loader, test_loader, log_every=1000, save_every=1)
+    train_loader, test_loader, x_train_var = get_dataloaders(args.dataset, batch_size=4)
+    train(
+        epochs=10,
+        net=net,
+        optimizer=optimizer,
+        train_loader=train_loader,
+        test_loader=test_loader,
+        log_every=args.log_every,
+        save_every=args.save_every,
+    )
