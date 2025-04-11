@@ -1,4 +1,5 @@
-__pycache__
+__pycache__/
 data/
 results/
-*.png
+!results/6_10000/9.png
+!results/6_10000/10.png
