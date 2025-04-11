@@ -61,12 +61,24 @@ class GeoGuessrDataset(Dataset):
 
 
 def get_loaders_geoGuessr(
-    batch_size, directory="/Users/personal/Desktop/geoGuessV2/createDataset/geoGuessrDataset"
+    batch_size,
+    size,
+    directory="/Users/personal/Desktop/geoGuessV2/createDataset/geoGuessrDataset",
 ):
+    if size == "small":
+        img_size = 256
+    elif size == "large":
+        img_size = 900
+    else:
+        raise NotImplementedError()
+
     transform = transforms.Compose(
         [
-            transforms.RandomCrop((512, 512)),
-            # transforms.Resize((224, 224)),
+            # transforms.RandomCrop((img_size, img_size)),
+            # TMP!!!
+            transforms.RandomCrop((img_size, img_size)),
+            transforms.Resize((1024, 1024)),
+            # TMP!!!
             transforms.ToTensor(),
             # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             transforms.RandomHorizontalFlip(),
@@ -95,10 +107,10 @@ def get_loaders_geoGuessr(
     return loaders["train"], loaders["val"], 1
 
 
-def get_dataloaders(dataset, batch_size):
+def get_dataloaders(dataset, size, batch_size):
     if dataset == "CIFAR10":
         return get_dataloaders_cifar(batch_size)
     elif dataset == "geoguessr":
-        return get_loaders_geoGuessr(batch_size)
+        return get_loaders_geoGuessr(batch_size, size)
     else:
         raise NotImplementedError

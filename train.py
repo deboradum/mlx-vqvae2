@@ -9,7 +9,7 @@ import mlx.optimizers as optim
 
 from PIL import Image
 
-from models.vqvae import VQVAE2
+from models.vqvae import VQVAE2, VQVAE2_large
 from mlx.utils import tree_flatten
 from dataset import get_dataloaders
 
@@ -101,6 +101,7 @@ def train(epochs, net, optimizer, train_loader, test_loader, log_every=100, save
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("size", type=str, default="small")
     parser.add_argument("dataset", type=str, default="geoguessr")
     parser.add_argument("--log_every", type=int, default=100)
     parser.add_argument("--save_every", type=int, default=1)
@@ -118,13 +119,19 @@ if __name__ == "__main__":
         "btm_loss": [],
         "perplexity": [],
     }
-    net = VQVAE2(128, 64, 2, 512, 64, 0.25)
+    if args.size == "small":
+        net = VQVAE2(128, 64, 2, 512, 64, 0.25)
+    elif args.size == "large":
+        net = VQVAE2_large(128, 64, 2, 512, 64, 0.25)
+    else:
+        raise NotImplementedError("size argument should be 'small' or 'large'")
+
     if args.load_checkpoint:
         net.load_weights(args.load_checkpoint)
 
     optimizer = optim.Adam(learning_rate=1e-4)
 
-    train_loader, test_loader, x_train_var = get_dataloaders(args.dataset, batch_size=4)
+    train_loader, test_loader, x_train_var = get_dataloaders(args.dataset, args.size, batch_size=4)
     train(
         epochs=10,
         net=net,
