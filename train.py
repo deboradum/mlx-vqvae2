@@ -73,7 +73,13 @@ def train(epochs, net, optimizer, train_loader, test_loader, log_every=100, save
     loss_and_grad_fn = nn.value_and_grad(net, loss_fn)
     s = time.perf_counter()
     for epoch in range(epochs):
-        # save_snapshot(net, test_loader, path=f"results/{epoch}")
+        metrics = {
+            "total_loss": [],
+            "recon_loss": [],
+            "top_loss": [],
+            "btm_loss": [],
+            "perplexity": [],
+        }
         net.train(True)
         for i, (X, _) in enumerate(train_loader):
             X = mx.array(X.numpy()).transpose(0, 2, 3, 1)
