@@ -69,7 +69,16 @@ def get_avg_metrics(window):
     return total_loss, recon_loss, perplexity
 
 
-def train(epochs, net, optimizer, train_loader, test_loader, log_every=100, save_every=1):
+def train(
+    epochs,
+    net,
+    optimizer,
+    train_loader,
+    test_loader,
+    output_dir,
+    log_every=100,
+    save_every=1,
+):
     loss_and_grad_fn = nn.value_and_grad(net, loss_fn)
     s = time.perf_counter()
     for epoch in range(epochs):
@@ -95,11 +104,11 @@ def train(epochs, net, optimizer, train_loader, test_loader, log_every=100, save
                 print(
                     f"Epoch {epoch}, step {i}/{len(train_loader)} - loss: {avg_total_loss:.5f}, recon_loss: {avg_recon_loss:.5f}, perplexity: {avg_perplexity:.5f}. Took {took:.3f}s ({time_per_it:.3f} s/it)"
                 )
-                save_snapshot(net, test_loader, path=f"results/{epoch}_{i}")
+                save_snapshot(net, test_loader, path=f"{output_dir}/{epoch}_{i}")
                 s = time.perf_counter()
 
         if epoch % save_every == 0:
-            model_path = f"checkpoint_epoch_{epoch}.npz"
+            model_path = f"{output_dir}/checkpoint_epoch_{epoch}.npz"
             print(f"Saving model in {model_path}")
             flat_params = tree_flatten(net.parameters())
             mx.savez(model_path, **dict(flat_params))
@@ -109,6 +118,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("size", type=str, default="small")
     parser.add_argument("dataset", type=str, default="geoguessr")
+    parser.add_argument("--output_dir", type=str, default="results")
     parser.add_argument("--log_every", type=int, default=100)
     parser.add_argument("--save_every", type=int, default=1)
     parser.add_argument("--load_checkpoint", type=str, default=None)
@@ -135,7 +145,7 @@ if __name__ == "__main__":
     if args.load_checkpoint:
         net.load_weights(args.load_checkpoint)
 
-    optimizer = optim.Adam(learning_rate=1e-4)
+    optimizer = optim.Adam(learning_rate=3e-4)
 
     train_loader, test_loader, x_train_var = get_dataloaders(args.dataset, args.size, batch_size=4)
     train(
@@ -144,6 +154,7 @@ if __name__ == "__main__":
         optimizer=optimizer,
         train_loader=train_loader,
         test_loader=test_loader,
+        output_dir=args.output_dir,
         log_every=args.log_every,
         save_every=args.save_every,
     )
