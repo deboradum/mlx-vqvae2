@@ -44,14 +44,13 @@ def save_snapshot(net, loader, path="results/0/"):
 
 
 def loss_fn(net, X):
-    x_hat, top_loss, btm_loss, perplexity = net(X)
+    outputs = net(X)
+    x_hat, *losses, perplexity = outputs
     recon_loss = ((x_hat - X) ** 2).mean() / x_train_var
-    loss = recon_loss + top_loss + btm_loss
+    loss = recon_loss + sum(losses)
 
     metrics["total_loss"].append(loss.item())
     metrics["recon_loss"].append(recon_loss.item())
-    metrics["top_loss"].append(top_loss.item())
-    metrics["btm_loss"].append(btm_loss.item())
     metrics["perplexity"].append(perplexity.item())
 
     return loss
@@ -82,13 +81,7 @@ def train(
     loss_and_grad_fn = nn.value_and_grad(net, loss_fn)
     s = time.perf_counter()
     for epoch in range(epochs):
-        metrics = {
-            "total_loss": [],
-            "recon_loss": [],
-            "top_loss": [],
-            "btm_loss": [],
-            "perplexity": [],
-        }
+        metrics = {"total_loss": [], "recon_loss": [], "perplexity": []}
         net.train(True)
         for i, (X, _) in enumerate(train_loader):
             X = mx.array(X.numpy()).transpose(0, 2, 3, 1)
@@ -128,13 +121,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    metrics = {
-        "total_loss": [],
-        "recon_loss": [],
-        "top_loss": [],
-        "btm_loss": [],
-        "perplexity": [],
-    }
+    metrics = {"total_loss": [], "recon_loss": [], "perplexity": []}
     if args.size == "small":
         net = VQVAE2(128, 64, 2, 512, 64, 0.25)
     elif args.size == "large":
