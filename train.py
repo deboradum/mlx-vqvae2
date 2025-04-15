@@ -24,7 +24,8 @@ def save_snapshot(net, loader, path="results/0/"):
         if i > 4:
             return
         batch = mx.array(batch.numpy()).transpose(0, 2, 3, 1)
-        x_hat, _, _, _ = net(batch)
+        outputs = net(batch)
+        x_hat, *losses, perplexity = outputs
 
         x_hat = np.array(x_hat)
         batch = np.array(batch)
