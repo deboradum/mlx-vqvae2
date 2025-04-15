@@ -66,24 +66,28 @@ def get_loaders_geoGuessr(
     directory="/Users/personal/Desktop/geoGuessV2/createDataset/geoGuessrDataset",
 ):
     if size == "small":
-        img_size = 256
+        img_size = 512
+        transform = transforms.Compose(
+            [
+                transforms.RandomCrop((img_size, img_size)),
+                transforms.ToTensor(),
+                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                transforms.RandomHorizontalFlip(),
+            ]
+        )
     elif size == "large":
         img_size = 900
+        transform = transforms.Compose(
+            [
+                transforms.RandomCrop((img_size, img_size)),
+                transforms.Resize((1024, 1024)),
+                transforms.ToTensor(),
+                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                transforms.RandomHorizontalFlip(),
+            ]
+        )
     else:
         raise NotImplementedError()
-
-    transform = transforms.Compose(
-        [
-            # transforms.RandomCrop((img_size, img_size)),
-            # TMP!!!
-            transforms.RandomCrop((img_size, img_size)),
-            transforms.Resize((1024, 1024)),
-            # TMP!!!
-            transforms.ToTensor(),
-            # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            transforms.RandomHorizontalFlip(),
-        ]
-    )
 
     datasets = {
         "train": GeoGuessrDataset(
