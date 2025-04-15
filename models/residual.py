@@ -16,8 +16,9 @@ class ResidualLayer(nn.Module):
         return x + self.layers(x)
 
 
-class ResidualStack:
+class ResidualStack(nn.Module):
     def __init__(self, in_dim, out_dim, h_dim, num_layers):
+        super().__init__()
         self.stack = nn.Sequential(
             *[ResidualLayer(in_dim, out_dim, h_dim)] * num_layers
         )
